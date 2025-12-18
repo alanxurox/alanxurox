@@ -272,17 +272,23 @@ saved_meditations (
 
 ## MVP Scope Definition
 
-### ✅ MVP (Week 1-2)
+### ✅ Lovable V1 - CONFIRMED SCOPE
 
-- [ ] User auth (Supabase)
-- [ ] Basic intake flow (3-5 questions)
-- [ ] 3 meditation types: Quick Calm, Breath Work, Body Scan
-- [ ] Gemini script generation
-- [ ] Gemini TTS audio generation
-- [ ] Simple player UI
-- [ ] Session history
+**Frontend (Lovable will build):**
+- [x] Calming design system with soft gradients and smooth animations
+- [x] Home dashboard with quick action buttons
+- [x] Conversational intake flow for mood/stress assessment
+- [x] Meditation player with clean, distraction-free UI
+- [x] Session history view
+- [x] Responsive, mobile-first design
 
-### 🔄 Phase 2 (Week 3-4)
+**Backend Integration (To be wired up):**
+- [ ] Supabase auth integration
+- [ ] Gemini 2.5 Flash for script generation
+- [ ] Gemini TTS for audio synthesis
+- [ ] Session data persistence
+
+### 🔄 Phase 2
 
 - [ ] Voice selection (male/female)
 - [ ] NSDR/Yoga Nidra support

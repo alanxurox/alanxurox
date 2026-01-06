@@ -1,0 +1,21 @@
+{
+  "name": "czech-visa-alert-bot",
+  "version": "1.0.0",
+  "description": "Alert bot for Czech visa reservation system to monitor available appointment slots",
+  "main": "visa-bot.js",
+  "scripts": {
+    "start": "node visa-bot.js",
+    "dev": "nodemon visa-bot.js"
+  },
+  "keywords": ["visa", "reservation", "alert", "bot", "automation"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.11.0",
+    "dotenv": "^16.4.1",
+    "node-notifier": "^10.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}

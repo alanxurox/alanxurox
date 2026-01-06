@@ -10,6 +10,7 @@ const CONFIG = {
   checkInterval: parseInt(process.env.CHECK_INTERVAL) || 300000, // 5 minutes default
   startDate: new Date(process.env.START_DATE || '2026-01-01'),
   endDate: new Date(process.env.END_DATE || '2026-02-15'),
+  debugMode: process.env.DEBUG_MODE === 'true', // Set to true to see browser and save screenshots
 };
 
 // Track previously found available dates to avoid duplicate notifications
@@ -26,8 +27,9 @@ async function checkVisaAvailability() {
 
     // Launch browser
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      headless: CONFIG.debugMode ? false : 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      slowMo: CONFIG.debugMode ? 100 : 0 // Slow down actions in debug mode
     });
 
     const page = await browser.newPage();
@@ -142,77 +144,75 @@ async function performLogin(page) {
 
 /**
  * Find available appointment dates (non-red dates)
+ * This function handles JavaScript-heavy calendars that require interaction
  */
 async function findAvailableDates(page) {
   try {
     const availableDates = [];
 
-    // Wait for calendar to load
-    await page.waitForTimeout(2000);
+    // Wait for calendar/content to load and JavaScript to execute
+    console.log('Waiting for page to fully render...');
+    await page.waitForTimeout(3000);
 
-    // Strategy 1: Look for calendar date elements
-    // Common class names for calendar dates: .calendar-day, .date-cell, .day, etc.
-    const dateElements = await page.$$('[class*="calendar"] [class*="day"], [class*="date-cell"], .day, td[data-date]');
+    // Take initial screenshot in debug mode
+    if (CONFIG.debugMode) {
+      await page.screenshot({ path: 'debug-initial.png', fullPage: true });
+      console.log('📸 Initial screenshot saved to debug-initial.png');
+    }
 
-    if (dateElements.length > 0) {
-      console.log(`Found ${dateElements.length} date elements to check...`);
+    // Look for common calendar selectors and wait for them
+    const calendarSelectors = [
+      '[class*="calendar"]',
+      '[class*="datepicker"]',
+      '[class*="date-picker"]',
+      'table[class*="calendar"]',
+      'div[class*="calendar"]',
+      '[role="grid"]',
+      '.calendar',
+      '.datepicker'
+    ];
 
-      for (const element of dateElements) {
-        try {
-          // Get the date value and styling
-          const dateInfo = await page.evaluate(el => {
-            const dateValue = el.getAttribute('data-date') ||
-                            el.getAttribute('data-day') ||
-                            el.textContent.trim();
-
-            const computedStyle = window.getComputedStyle(el);
-            const bgColor = computedStyle.backgroundColor;
-            const color = computedStyle.color;
-            const classes = el.className;
-
-            // Check if the element is disabled or marked as unavailable
-            const isDisabled = el.hasAttribute('disabled') ||
-                             classes.includes('disabled') ||
-                             classes.includes('unavailable') ||
-                             classes.includes('blocked');
-
-            // Check if the date is marked as red (unavailable)
-            const isRed = bgColor.includes('rgb(255, 0, 0)') ||
-                         bgColor.includes('rgb(220, 53, 69)') ||
-                         color.includes('rgb(255, 0, 0)') ||
-                         classes.includes('red') ||
-                         classes.includes('unavailable');
-
-            return { dateValue, isDisabled, isRed, classes, bgColor, color };
-          }, element);
-
-          // Parse the date and check if it's in our target range
-          const date = parseDate(dateInfo.dateValue);
-
-          if (date && date >= CONFIG.startDate && date < CONFIG.endDate) {
-            // If the date is not disabled and not red, it's available
-            if (!dateInfo.isDisabled && !dateInfo.isRed) {
-              availableDates.push(formatDate(date));
-            }
-          }
-        } catch (err) {
-          // Skip this element if there's an error
-          continue;
-        }
+    let calendarFound = false;
+    for (const selector of calendarSelectors) {
+      try {
+        await page.waitForSelector(selector, { timeout: 5000 });
+        console.log(`✓ Found calendar with selector: ${selector}`);
+        calendarFound = true;
+        break;
+      } catch (e) {
+        continue;
       }
     }
 
-    // Strategy 2: Look for clickable date buttons
-    if (availableDates.length === 0) {
-      const clickableDates = await page.$$('button[class*="date"]:not([disabled]), a[class*="date"]:not([disabled])');
+    if (!calendarFound) {
+      console.log('⚠️  No calendar element found, will try generic date detection');
+    }
 
-      for (const element of clickableDates) {
-        const dateText = await page.evaluate(el => el.textContent.trim(), element);
-        const date = parseDate(dateText);
+    // Navigate to January and February months to check both
+    const monthsToCheck = await navigateToTargetMonths(page);
+    console.log(`Will check ${monthsToCheck.length} month(s) for availability`);
 
-        if (date && date >= CONFIG.startDate && date < CONFIG.endDate) {
-          availableDates.push(formatDate(date));
-        }
+    // For each month, check all dates
+    for (const monthInfo of monthsToCheck) {
+      console.log(`\nChecking ${monthInfo}...`);
+      await page.waitForTimeout(2000); // Wait for month to render
+
+      if (CONFIG.debugMode) {
+        await page.screenshot({ path: `debug-${monthInfo.replace(/\s+/g, '-')}.png`, fullPage: true });
+        console.log(`📸 Screenshot saved for ${monthInfo}`);
+      }
+
+      // Strategy 1: Interactive clicking - click each date to see if time slots appear
+      const interactiveDates = await checkDatesInteractively(page);
+      availableDates.push(...interactiveDates);
+
+      // Strategy 2: Visual analysis - check colors and classes
+      const visualDates = await checkDatesVisually(page);
+      availableDates.push(...visualDates);
+
+      // Navigate to next month if needed
+      if (monthsToCheck.indexOf(monthInfo) < monthsToCheck.length - 1) {
+        await clickNextMonth(page);
       }
     }
 
@@ -231,6 +231,322 @@ async function findAvailableDates(page) {
 
     return [];
   }
+}
+
+/**
+ * Navigate to target months (January and February 2026)
+ */
+async function navigateToTargetMonths(page) {
+  const monthsToCheck = [];
+  const currentMonth = new Date().getMonth(); // 0-11
+  const currentYear = new Date().getFullYear();
+  const targetYear = CONFIG.startDate.getFullYear();
+  const startMonth = CONFIG.startDate.getMonth(); // 0 = January
+  const endMonth = CONFIG.endDate.getMonth(); // 1 = February
+
+  // If we need to navigate to a future month
+  if (targetYear > currentYear || (targetYear === currentYear && startMonth > currentMonth)) {
+    const monthsToNavigate = ((targetYear - currentYear) * 12) + (startMonth - currentMonth);
+    console.log(`Navigating ${monthsToNavigate} month(s) forward...`);
+
+    for (let i = 0; i < monthsToNavigate; i++) {
+      await clickNextMonth(page);
+      await page.waitForTimeout(1000);
+    }
+  }
+
+  // Add months to check
+  monthsToCheck.push('January 2026');
+  if (endMonth > startMonth) {
+    monthsToCheck.push('February 2026');
+  }
+
+  return monthsToCheck;
+}
+
+/**
+ * Click next month button in calendar
+ */
+async function clickNextMonth(page) {
+  const nextMonthSelectors = [
+    'button[class*="next"]',
+    'button[class*="forward"]',
+    'button[aria-label*="next"]',
+    '[class*="calendar"] button:last-child',
+    '.next-month',
+    '[title*="Next"]'
+  ];
+
+  for (const selector of nextMonthSelectors) {
+    try {
+      const button = await page.$(selector);
+      if (button) {
+        await button.click();
+        console.log('Clicked next month button');
+        return true;
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+
+  console.log('⚠️  Could not find next month button');
+  return false;
+}
+
+/**
+ * Check dates by clicking on them to see if time slots appear
+ */
+async function checkDatesInteractively(page) {
+  const availableDates = [];
+
+  try {
+    // Find all date elements (buttons, cells, etc.)
+    const dateSelectors = [
+      'td[class*="day"]:not([class*="disabled"])',
+      'button[class*="day"]:not([disabled])',
+      'div[class*="day"]:not([class*="disabled"])',
+      '[role="gridcell"]:not([aria-disabled="true"])',
+      'td.day:not(.disabled)',
+      'button.day:not(:disabled)'
+    ];
+
+    for (const selector of dateSelectors) {
+      const dateElements = await page.$$(selector);
+
+      if (dateElements.length > 0) {
+        console.log(`Found ${dateElements.length} clickable date elements with: ${selector}`);
+
+        for (const element of dateElements) {
+          try {
+            // Get date info before clicking
+            const dateInfo = await page.evaluate(el => {
+              const text = el.textContent.trim();
+              const classes = el.className;
+              const isDisabled = el.hasAttribute('disabled') ||
+                               el.getAttribute('aria-disabled') === 'true' ||
+                               classes.includes('disabled');
+
+              return { text, classes, isDisabled };
+            }, element);
+
+            if (dateInfo.isDisabled) continue;
+
+            // Click the date to see if times become available
+            await element.click();
+            await page.waitForTimeout(500); // Wait for time slots to appear
+
+            // Check if time slots appeared (indicating availability)
+            const hasTimeSlots = await page.evaluate(() => {
+              const timeSelectors = [
+                '[class*="time"]',
+                '[class*="slot"]',
+                'button[class*="time"]',
+                'select[class*="time"]'
+              ];
+
+              for (const sel of timeSelectors) {
+                const elements = document.querySelectorAll(sel);
+                if (elements.length > 0) {
+                  // Check if any time slots are not disabled/red
+                  for (const elem of elements) {
+                    const style = window.getComputedStyle(elem);
+                    const isRed = style.backgroundColor.includes('255, 0, 0') ||
+                                 style.color.includes('255, 0, 0') ||
+                                 elem.className.includes('disabled') ||
+                                 elem.className.includes('unavailable');
+
+                    if (!isRed && !elem.hasAttribute('disabled')) {
+                      return true;
+                    }
+                  }
+                }
+              }
+              return false;
+            });
+
+            if (hasTimeSlots) {
+              // This date has available time slots!
+              const currentMonthYear = await page.evaluate(() => {
+                const monthEl = document.querySelector('[class*="month"]');
+                return monthEl ? monthEl.textContent : '';
+              });
+
+              const dateStr = parseDateFromElement(dateInfo.text, currentMonthYear);
+              if (dateStr && isInTargetRange(dateStr)) {
+                console.log(`  ✓ Date ${dateStr} has available time slots`);
+                availableDates.push(dateStr);
+              }
+            }
+
+          } catch (err) {
+            // Continue to next date if there's an error
+            continue;
+          }
+        }
+
+        // If we found dates with this selector, we can stop
+        if (dateElements.length > 0) break;
+      }
+    }
+
+  } catch (error) {
+    console.log('Interactive checking failed:', error.message);
+  }
+
+  return availableDates;
+}
+
+/**
+ * Check dates by analyzing their visual appearance (color, classes)
+ */
+async function checkDatesVisually(page) {
+  const availableDates = [];
+
+  try {
+    // Get all date information from the page
+    const datesInfo = await page.evaluate(() => {
+      const results = [];
+
+      // Look for all potential date elements
+      const selectors = [
+        'td[class*="day"]',
+        'button[class*="day"]',
+        'div[class*="day"]',
+        '[role="gridcell"]',
+        'td.day',
+        'button.day'
+      ];
+
+      for (const selector of selectors) {
+        const elements = document.querySelectorAll(selector);
+
+        for (const el of elements) {
+          const style = window.getComputedStyle(el);
+          const text = el.textContent.trim();
+
+          // Skip if empty or not a number
+          if (!text || !/\d/.test(text)) continue;
+
+          const info = {
+            text: text,
+            classes: el.className,
+            bgColor: style.backgroundColor,
+            color: style.color,
+            isDisabled: el.hasAttribute('disabled') ||
+                       el.getAttribute('aria-disabled') === 'true' ||
+                       el.className.includes('disabled') ||
+                       el.className.includes('unavailable'),
+            isRed: style.backgroundColor.includes('255, 0, 0') ||
+                   style.backgroundColor.includes('220, 53, 69') ||
+                   style.color.includes('255, 0, 0') ||
+                   el.className.includes('red') ||
+                   el.className.includes('unavailable') ||
+                   el.className.includes('blocked'),
+            isGreen: style.backgroundColor.includes('0, 255, 0') ||
+                    style.backgroundColor.includes('40, 167, 69') ||
+                    el.className.includes('green') ||
+                    el.className.includes('available'),
+          };
+
+          results.push(info);
+        }
+
+        // If we found dates, use them
+        if (results.length > 0) break;
+      }
+
+      return results;
+    });
+
+    console.log(`Visual analysis found ${datesInfo.length} date elements`);
+
+    // Get current month/year for context
+    const currentMonthYear = await page.evaluate(() => {
+      const selectors = [
+        '[class*="month"]',
+        '[class*="current"]',
+        '.calendar-header',
+        'h2', 'h3'
+      ];
+
+      for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el && /\d{4}/.test(el.textContent)) {
+          return el.textContent.trim();
+        }
+      }
+      return '';
+    });
+
+    for (const dateInfo of datesInfo) {
+      // Date is available if it's NOT disabled and NOT red
+      // Or if it's explicitly marked as green/available
+      const isAvailable = (!dateInfo.isDisabled && !dateInfo.isRed) || dateInfo.isGreen;
+
+      if (isAvailable) {
+        const dateStr = parseDateFromElement(dateInfo.text, currentMonthYear);
+        if (dateStr && isInTargetRange(dateStr)) {
+          console.log(`  ✓ Date ${dateStr} appears available (not red/disabled)`);
+          availableDates.push(dateStr);
+        }
+      }
+    }
+
+  } catch (error) {
+    console.log('Visual checking failed:', error.message);
+  }
+
+  return availableDates;
+}
+
+/**
+ * Parse date from element text and month context
+ */
+function parseDateFromElement(dayText, monthContext) {
+  try {
+    const day = parseInt(dayText);
+    if (isNaN(day) || day < 1 || day > 31) return null;
+
+    // Extract month and year from context
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+
+    let month = -1;
+    let year = CONFIG.startDate.getFullYear();
+
+    for (let i = 0; i < monthNames.length; i++) {
+      if (monthContext.includes(monthNames[i])) {
+        month = i;
+        break;
+      }
+    }
+
+    // Extract year from context
+    const yearMatch = monthContext.match(/\d{4}/);
+    if (yearMatch) {
+      year = parseInt(yearMatch[0]);
+    }
+
+    if (month === -1) {
+      // Default to start month if we can't find it
+      month = CONFIG.startDate.getMonth();
+    }
+
+    const date = new Date(year, month, day);
+    return formatDate(date);
+
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Check if date string is in target range
+ */
+function isInTargetRange(dateStr) {
+  const date = parseDate(dateStr);
+  return date && date >= CONFIG.startDate && date < CONFIG.endDate;
 }
 
 /**

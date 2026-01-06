@@ -10,6 +10,9 @@ Automated bot to monitor the Czech visa reservation system for available bridgin
 - 🔐 **Secure Login**: Handles authentication automatically
 - ⚡ **Configurable Check Interval**: Set how frequently to check for availability
 - 🎯 **Smart Detection**: Identifies available dates (non-red dates on the calendar)
+- 🖱️ **Interactive Clicking**: Clicks on dates to reveal time slots (handles JavaScript-heavy calendars)
+- 📆 **Month Navigation**: Automatically navigates through January and February
+- 🐛 **Debug Mode**: See the browser window and screenshots for troubleshooting
 
 ## Prerequisites
 
@@ -50,6 +53,9 @@ CHECK_INTERVAL=300000
 # Date range to monitor (YYYY-MM-DD)
 START_DATE=2026-01-01
 END_DATE=2026-02-15
+
+# Debug mode - set to true to see browser and save screenshots
+DEBUG_MODE=false
 ```
 
 ## Usage
@@ -84,16 +90,29 @@ npm run dev
 
 ## How It Works
 
-The bot uses Puppeteer (headless Chrome browser) to:
+The bot uses Puppeteer (headless Chrome browser) with **two detection strategies**:
 
-- Navigate to the Czech visa reservation system
-- Authenticate with your credentials
-- Analyze the calendar interface
-- Detect available dates by checking:
-  - Date element colors (avoiding red/unavailable dates)
-  - Disabled state
-  - CSS classes indicating availability
-- Send notifications for new available dates
+### Strategy 1: Interactive Clicking
+- Clicks on each date in the calendar
+- Waits for time slots to appear (handles JavaScript-heavy calendars)
+- Checks if any time slots are available (not red/disabled)
+- This catches dates that only reveal availability after clicking
+
+### Strategy 2: Visual Analysis
+- Analyzes date elements for color and styling
+- Detects dates that are NOT marked as:
+  - Red/unavailable
+  - Disabled
+  - Blocked
+- Looks for dates explicitly marked as green/available
+
+### Additional Features
+- **Month Navigation**: Automatically navigates to January and February 2026
+- **Multiple Selectors**: Tries various CSS selectors to find calendar elements
+- **Debug Mode**: Saves screenshots at each step for troubleshooting
+- **Robust Detection**: Works with dynamic JavaScript calendars
+
+The bot checks both strategies and combines results to ensure no available dates are missed!
 
 ## Notification System
 
@@ -109,25 +128,45 @@ Future enhancements could include:
 
 ### Bot not finding available dates?
 
-1. Check `error-screenshot.png` for visual debugging
-2. The website structure may have changed - you may need to update the selectors in `visa-bot.js`
-3. Increase the wait times if the page loads slowly
+**Enable Debug Mode first:**
+1. Set `DEBUG_MODE=true` in `.env`
+2. Run the bot - it will show the browser window and save screenshots
+3. Check the screenshots saved as:
+   - `debug-initial.png` - Initial page load
+   - `debug-January-2026.png` - January calendar view
+   - `debug-February-2026.png` - February calendar view
+   - `error-screenshot.png` - If errors occur
+
+**Other fixes:**
+1. The website structure may have changed - update selectors in `visa-bot.js`
+2. Increase wait times in the code if page loads slowly
+3. Check console output for which strategy is running
 
 ### Login failing?
 
 1. Verify your credentials in `.env`
-2. Check if the website requires CAPTCHA
-3. Try running in non-headless mode to see what's happening:
-   ```javascript
-   // In visa-bot.js, change:
-   headless: 'new'
-   // to:
-   headless: false
-   ```
+2. Set `DEBUG_MODE=true` to watch the login process
+3. Check if the website requires CAPTCHA (bot will need manual intervention)
+4. Look for error messages in console output
+
+### Bot clicks dates but doesn't detect availability?
+
+1. Enable debug mode to see what's happening
+2. The time slots might use different selectors - check the code around line 340
+3. Adjust the wait time after clicking (currently 500ms) if slots load slowly
 
 ### No desktop notifications?
 
 - Ensure you have notification permissions enabled for your terminal/Node.js
+- Test notifications manually: the bot logs alerts to console first
+
+### Debug Mode Explained
+
+When `DEBUG_MODE=true`:
+- Browser window opens (not headless) so you can watch
+- Actions are slowed down (100ms delay) for easier observation
+- Screenshots are saved at each major step
+- Useful for understanding what the bot sees vs. what you expect
 
 ## Security Notes
 

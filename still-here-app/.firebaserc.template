@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "still-here-prod",
+    "dev": "still-here-dev",
+    "staging": "still-here-staging"
+  },
+  "targets": {},
+  "etags": {}
+}

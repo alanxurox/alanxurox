@@ -13,6 +13,13 @@ Building production multi-agent systems that actually ship.
 - Building MCP-based knowledge routing systems for cross-platform AI context
 - Researching self-healing validation loops for LLM-generated output
 
+## Open Source Skills
+| Skill | What It Does |
+|-------|-------------|
+| [**better-glean**](https://github.com/alanxurox/better-glean) | Precise Glean MCP search patterns — teaches AI agents to use 40+ Glean parameters instead of generic queries |
+
+Built on the [Agent Skills](https://agentskills.io) open standard. Install: `git clone https://github.com/alanxurox/better-glean.git ~/.claude/skills/glean-search`
+
 ## Tech Stack
 ![Claude](https://img.shields.io/badge/Claude-API-blue) ![MCP](https://img.shields.io/badge/MCP-Protocol-purple) ![Python](https://img.shields.io/badge/Python-3.11-green) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![GCP](https://img.shields.io/badge/GCP-Terraform-orange) ![Docker](https://img.shields.io/badge/Docker-Compose-blue)
 

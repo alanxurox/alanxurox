@@ -1,0 +1,18 @@
+{
+  "defaultExecutionMode": "ultrawork",
+  "taskTool": "beads",
+  "taskToolConfig": {
+    "injectInstructions": true,
+    "useMcp": false
+  },
+  "team": {
+    "maxAgents": 3,
+    "defaultAgentType": "executor",
+    "monitorIntervalMs": 30000,
+    "shutdownTimeoutMs": 15000
+  },
+  "delegationEnforcementLevel": "off",
+  "skipHooks": ["keyword-detector", "pre-tool-use", "post-tool-use"],
+  "setupCompleted": "2026-02-12T06:11:55+01:00",
+  "setupVersion": "v4.2.2"
+}

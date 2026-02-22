@@ -1,0 +1,110 @@
+export PATH="/opt/homebrew/opt/conan@1/bin:$PATH"
+# Secrets loaded from ~/.env.secrets (chmod 600) — never commit plaintext tokens
+[[ -f ~/.env.secrets ]] && source ~/.env.secrets
+
+# =============================================================================
+# LAZY LOADING - Defers slow initializers until first use (~2s → ~0.3s startup)
+# =============================================================================
+
+# fnm (Fast Node Manager) - lazy load
+_fnm_lazy_init() {
+  unfunction node npm npx yarn pnpm bun 2>/dev/null
+  eval "$(fnm env --use-on-cd)"
+}
+node() { _fnm_lazy_init && node "$@" }
+npm() { _fnm_lazy_init && npm "$@" }
+npx() { _fnm_lazy_init && npx "$@" }
+yarn() { _fnm_lazy_init && yarn "$@" }
+pnpm() { _fnm_lazy_init && pnpm "$@" }
+bun() { _fnm_lazy_init && bun "$@" }
+
+# conda - lazy load
+_conda_lazy_init() {
+  unfunction conda 2>/dev/null
+  __conda_setup="$('/opt/homebrew/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+  if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+  else
+    if [ -f "/opt/homebrew/anaconda3/etc/profile.d/conda.sh" ]; then
+      . "/opt/homebrew/anaconda3/etc/profile.d/conda.sh"
+    else
+      export PATH="/opt/homebrew/anaconda3/bin:$PATH"
+    fi
+  fi
+  unset __conda_setup
+}
+conda() { _conda_lazy_init && conda "$@" }
+
+# pyenv - lazy load
+_pyenv_lazy_init() {
+  unfunction pyenv 2>/dev/null
+  eval "$(pyenv init --path)"
+  eval "$(pyenv init -)"
+}
+pyenv() { _pyenv_lazy_init && pyenv "$@" }
+
+# =============================================================================
+# END LAZY LOADING
+# =============================================================================
+
+# Added by Windsurf
+export PATH="/Users/yuanlun.xu/.codeium/windsurf/bin:$PATH"
+
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
+
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+. "$HOME/.local/bin/env"
+export PATH="$HOME/.local/bin:$PATH"
+alias python=python3
+
+# Added by Antigravity
+export PATH="/Users/yuanlun.xu/.antigravity/antigravity/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+export AWS_PROFILE=Norton-Developer-234190327268
+
+# Combined CA bundle: system certs + Zscaler/GenDigital corporate CAs
+# Fixes "unable to get local issuer certificate" for OpenSSL-based tools behind Zscaler proxy
+export SSL_CERT_FILE="/Users/yuanlun.xu/Documents/combined-ca-bundle.pem"
+export CURL_CA_BUNDLE="/Users/yuanlun.xu/Documents/combined-ca-bundle.pem"
+export REQUESTS_CA_BUNDLE="/Users/yuanlun.xu/Documents/combined-ca-bundle.pem"
+export NODE_EXTRA_CA_CERTS="/Users/yuanlun.xu/Documents/combined-ca-bundle.pem"
+
+alias claude-mem='bun "/Users/yuanlun.xu/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs"'
+
+# LiteLLM config (keys in ~/.env.secrets)
+export LITELLM_BASE_URL="https://litellm.prod.aws.lifelock.com"
+export OPENAI_BASE_URL="$LITELLM_BASE_URL"
+
+# LiteLLM Configuration (GenDigital corporate billing)
+export LITELLM_ANTHROPIC_URL="https://litellm.prod.aws.lifelock.com"
+
+# cc — composable Claude Code wrapper (~/bin/cc or ~/.local/bin/cc)
+# v1.4.0: LiteLLM is default for most users. Alan uses direct as default.
+export BETTER_LITELLM_DEFAULT=direct
+# All flags compose: cc [-l|--lite|-d|--direct] [--cds] [any claude flags]
+#   cc              → Direct Anthropic API (BETTER_LITELLM_DEFAULT=direct)
+#   cc -l           → LiteLLM (Bedrock), corporate billing
+#   cc -d           → Direct API (explicit)
+#   cc --cds        → content-dev-skills workspace (12 repos)
+#   cc -l --cds     → LiteLLM + CDS workspace
+#   cc -l -r        → Resume last session on LiteLLM
+#   cc --cds -l -r  → Resume CDS session on LiteLLM
+
+# Backward-compat aliases (all delegate to cc)
+alias claude-max='cc'
+alias claude-lite='cc -l'
+alias claude-cds='cc --cds'
+alias claude-vpc='ssh -t ubuntu@100.113.93.28 "cd ~ && bash -l -c '\''claude'\''"'
+
+alias att="$HOME/.local/bin/attendator.sh"
+export PATH="$HOME/bin:$PATH"
+
+export PATH="$HOME/.local/bin:$PATH"
+
+# Vercel skills CLI — wrapper in ~/.local/bin/skills (fnm-independent)
+
+# Claude Code - token defaults removed (32K output / 32K thinking are now built-in defaults)

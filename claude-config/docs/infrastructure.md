@@ -2,7 +2,7 @@
 
 ## VPC (Remote Agent Host)
 - **SSH alias:** `vpc-worker` (NEVER other variations)
-- **Host:** 100.113.93.28 (Ubuntu, Tailscale)
+- **Host:** vm-201012773.onecloud.gendigital.com (root, via Zscaler)
 - **Deploy agents on VPC** unless explicitly told to run locally
 - **Worker health:** port 37777
 - **Sync:** `~/.local/bin/sync-context-to-vpc`, `sync-artifacts-from-vpc`

@@ -174,6 +174,6 @@ NOT required for v1:
 
 ## References
 
-- Related skills: `go-expert`, `frontend-engineer`, `ai-agents-architect`
+- Related skills: `go-expert`, `designer`, `ai-agents-architect`
 - Philosophy: https://paulgraham.com/ds.html (Do Things That Don't Scale)
 - Boring Technology: https://boringtechnology.club/

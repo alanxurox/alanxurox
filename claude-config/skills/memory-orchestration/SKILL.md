@@ -14,7 +14,7 @@ Coordinates 4 memory systems to answer complex queries. Each system has distinct
 | System | Scope | Strength | Latency | Tool |
 |--------|-------|----------|---------|------|
 | **screenpipe** | Temporal/spatial (screen OCR, audio, UI events) | "What happened when" — precise timestamps | Low (indexed SQLite) | `mcp__screenpipe__search-content` |
-| **claude-mem** | Curated observations (learnings, patterns, mistakes) | "What matters" — high-signal insights | Instant (loaded in prompt) | Direct MEMORY.md read |
+| **claude-mem** | Curated observations (learnings, patterns, mistakes) | "What matters" — high-signal insights | Low (SQLite FTS) | Query `~/.claude-mem/claude-mem.db` |
 | **Glean** | Corporate knowledge (docs, wikis, people) | "What exists" — authoritative sources | Medium (REST API) | `mcp__glean_default__search` |
 | **VPC** | Async replica of claude-mem | Backup/collaboration — markdown files | High (SSH + grep) | SSH to `vpc-worker` |
 
@@ -32,7 +32,7 @@ Coordinates 4 memory systems to answer complex queries. Each system has distinct
 - "What mistakes have I made with git rebase?"
 - "What patterns did I discover about async/await?"
 - "How should I approach database migrations?"
-- Tool: Direct read of `~/.claude/projects/<project>/memory/MEMORY.md`
+- Tool: Query `~/.claude-mem/claude-mem.db` via SQL or claude-mem plugin
 
 ### Corporate Knowledge ("where's the doc for X?")
 → **Glean** first
@@ -62,7 +62,7 @@ Coordinates 4 memory systems to answer complex queries. Each system has distinct
      )
 
 2. claude-mem: Extract learnings from that period
-   → Read MEMORY.md, filter by date mentions
+   → Query claude-mem SQLite: SELECT * FROM observations WHERE content LIKE '%debug%'
 ```
 
 ### Pattern 2: Corporate → Temporal
@@ -86,7 +86,7 @@ Coordinates 4 memory systems to answer complex queries. Each system has distinct
 
 ```
 1. claude-mem: Find learning mention
-   → Grep MEMORY.md for "fix X"
+   → Query claude-mem: SELECT * FROM observations WHERE content LIKE '%fix X%'
 
 2. Glean: Find related wiki pages
    → mcp__glean_default__search(
@@ -140,8 +140,8 @@ Coordinates 4 memory systems to answer complex queries. Each system has distinct
 - **Follow search→read pattern**: Get URLs with search, full content with read_document
 
 ### claude-mem Performance
-- **Grep first**: `grep -i "pattern" MEMORY.md` before reading full file
-- **Check size**: If MEMORY.md >200 lines, topic files may be more relevant
+- **Query SQLite first**: `sqlite3 ~/.claude-mem/claude-mem.db "SELECT * FROM observations WHERE content LIKE '%pattern%' LIMIT 10"`
+- **Use FTS**: `SELECT * FROM observations_fts WHERE observations_fts MATCH 'pattern'` for faster search
 
 ## Don't Do This
 
@@ -154,6 +154,6 @@ Coordinates 4 memory systems to answer complex queries. Each system has distinct
 ## References
 
 - Screenpipe docs: `~/.screenpipe/` (db.sqlite, data/, models/)
-- claude-mem: `~/.claude/projects/<project>/memory/` (MEMORY.md, topic files)
+- claude-mem: `~/.claude-mem/claude-mem.db` (SQLite canonical store)
 - Glean skill: `glean-search` for query pattern examples
 - VPC sync: `~/.local/bin/sync-context-to-vpc` script

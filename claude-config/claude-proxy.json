@@ -1,0 +1,18 @@
+{
+  "upstream": "https://litellm.prod.aws.lifelock.com",
+  "port": 8787,
+  "strip_headers": ["anthropic-beta"],
+  "strip_query_params": ["beta"],
+  "strip_body_fields": ["context_management"],
+  "strip_body_fields_recursive": ["cache_control"],
+  "verbose": false,
+  "monthly_budget": 500,
+  "pricing": {
+    "gen-premiumPlus-opus4.6": { "input": 15, "output": 75 },
+    "us.anthropic.claude-opus-4-5-20251101-v1:0": { "input": 15, "output": 75 },
+    "us.anthropic.claude-sonnet-4-5-20250929-v1:0": { "input": 3, "output": 15 },
+    "us.anthropic.claude-sonnet-4-20250514-v1:0": { "input": 3, "output": 15 },
+    "us.anthropic.claude-haiku-4-5-20251001-v1:0": { "input": 0.80, "output": 4 },
+    "default": { "input": 15, "output": 75 }
+  }
+}

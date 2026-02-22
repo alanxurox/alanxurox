@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+# cc — composable Claude Code wrapper
+# Usage:
+#   cc                    → Max plan, skip perms
+#   cc -l                 → LiteLLM (Bedrock) via local proxy, skip perms
+#   cc -happy             → Launch via Happy Coder (mobile QR)
+#   cc -happy -l          → Happy + LiteLLM
+#   cc -n                 → New session (explicit, default behavior)
+#   cc --cds              → content-dev-skills workspace
+#   cc -l --cds           → LiteLLM + CDS workspace
+#   cc -l -r              → Resume last session on LiteLLM
+#   cc --cds -l -r        → Resume CDS session on LiteLLM
+#   cc [any claude flags] → Passed through to claude
+
+set -euo pipefail
+
+ARGS=(--dangerously-skip-permissions)
+PASSTHROUGH=()
+DO_CDS=false
+DO_LITELLM=false
+DO_HAPPY=false
+PROXY_PORT="${PROXY_PORT:-8787}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -l|--lite|--litellm)
+      DO_LITELLM=true
+      shift
+      ;;
+    --cds)
+      DO_CDS=true
+      shift
+      ;;
+    -happy|--happy)
+      DO_HAPPY=true
+      shift
+      ;;
+    -n|--new)
+      # Explicit "new session" (default behavior, opposite of -r)
+      shift
+      ;;
+    *)
+      PASSTHROUGH+=("$1")
+      shift
+      ;;
+  esac
+done
+
+# Helper: set env var directly or via --claude-env depending on happy mode
+set_env() {
+  local key="$1" val="$2"
+  if $DO_HAPPY; then
+    ENV_ARGS+=(--claude-env "${key}=${val}")
+  else
+    export "$key"="$val"
+  fi
+}
+
+ENV_ARGS=()
+
+# LiteLLM mode: start beta-stripping proxy, point Claude Code at it
+if $DO_LITELLM; then
+  PIDFILE="$HOME/.better-litellm.pid"
+
+  # Start proxy if not already running
+  if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    set_env ANTHROPIC_BASE_URL "http://127.0.0.1:${PROXY_PORT}"
+  else
+    export LITELLM_UPSTREAM="$LITELLM_ANTHROPIC_URL"
+    export PROXY_PORT
+    node "$HOME/.local/bin/better-litellm-proxy.js" &>/dev/null &
+    disown
+    sleep 0.8
+    if ! [[ -f "$PIDFILE" ]] || ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+      echo "⚠ litellm-proxy failed to start — falling back to direct LiteLLM (beta headers may cause errors)" >&2
+      set_env ANTHROPIC_BASE_URL "$LITELLM_ANTHROPIC_URL"
+    else
+      set_env ANTHROPIC_BASE_URL "http://127.0.0.1:${PROXY_PORT}"
+    fi
+  fi
+
+  set_env ANTHROPIC_AUTH_TOKEN "$LITELLM_AUTH_TOKEN"
+  # Models available on corporate LiteLLM/Bedrock (verified Feb 2026):
+  set_env ANTHROPIC_DEFAULT_HAIKU_MODEL "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+  set_env ANTHROPIC_DEFAULT_SONNET_MODEL "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+  set_env ANTHROPIC_DEFAULT_OPUS_MODEL "gen-premiumPlus-opus4.6"
+  set_env ANTHROPIC_MODEL "gen-premiumPlus-opus4.6"
+  set_env ANTHROPIC_SMALL_FAST_MODEL "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+  set_env CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS 1
+
+  # Show monthly spend on launch (non-blocking, best-effort)
+  LITELLM_URL="${LITELLM_ANTHROPIC_URL:-https://litellm.prod.aws.lifelock.com}"
+  _month_start=$(date -u +%Y-%m-01)
+  _month_end=$(date -v1d -v+1m -v-1d -u +%Y-%m-%d 2>/dev/null || date -u +%Y-%m-28)
+  _month_label=$(date -u +%b)
+  _spend=$(curl -sf --max-time 2 \
+    "${LITELLM_URL}/spend/logs?start_date=${_month_start}&end_date=${_month_end}" \
+    -H "Authorization: Bearer ${LITELLM_AUTH_TOKEN}" 2>/dev/null \
+    | python3 -c "import json,sys; print('%.2f'%sum(d.get('spend',0) for d in json.load(sys.stdin)))" 2>/dev/null) && {
+    if [[ -n "$_spend" && "$_spend" != "0.00" ]]; then
+      echo "[LiteLLM] ${_month_label} spend: \$${_spend}"
+      # Cache for HUD status line (read by better-litellm-hud and hud-wrapper.sh)
+      _budget=$(python3 -c "
+import json
+try:
+    c = json.load(open('$HOME/.claude-proxy.json'))
+    b = c.get('monthly_budget', '')
+    if b: print(b)
+except: pass
+" 2>/dev/null)
+      printf '%s\n%s\n%s\n' "$_spend" "$_month_label" "$_budget" > "$HOME/.better-litellm-spend.cache"
+    fi
+  } || true
+else
+  # Not LiteLLM — clear HUD cache so status line doesn't show stale data
+  rm -f "$HOME/.better-litellm-spend.cache"
+fi
+
+# CDS workspace: cd + add all dirs
+if $DO_CDS; then
+  cd "$HOME/content-dev-skills"
+  ARGS+=(
+    --add-dir "$HOME/agent-orchestrator"
+    --add-dir "$HOME/awesome-claude-code-subagents"
+    --add-dir "$HOME/styleguide-standarized"
+    --add-dir "$HOME/tai-ji"
+    --add-dir "$HOME/martech-deep-thought"
+    --add-dir "$HOME/mamba"
+    --add-dir "$HOME/cms"
+    --add-dir "$HOME/cdn"
+    --add-dir "$HOME/nitro-ui"
+    --add-dir "$HOME/Desktop/SDLC_cursor"
+    --add-dir "$HOME/ai-workspace-figma-to-html"
+    --add-dir "$HOME/mobile-ai-toolkit"
+    --add-dir "/tmp/claude"
+  )
+fi
+
+# Launch: happy (mobile QR) or claude (terminal)
+if $DO_HAPPY; then
+  exec "$HOME/.local/bin/happy" "${ARGS[@]}" ${ENV_ARGS[@]+"${ENV_ARGS[@]}"} ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}
+else
+  exec claude "${ARGS[@]}" ${PASSTHROUGH[@]+"${PASSTHROUGH[@]}"}
+fi

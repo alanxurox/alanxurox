@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "defaultMode": "default"
   },
@@ -59,6 +62,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$HOME/.claude/hooks/time-inject.sh",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "$HOME/.claude/hooks/skill-eval.sh",
             "timeout": 5
           }
@@ -75,22 +87,49 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__sdlc-jira__(create_issue|update_issue|add_comment|add_labels|bulk_update_issues)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/jira-gate.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__mcp-teamcity__StartTeamCityBuild",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[TC BUILD] Triggering build — review parameters above'",
+            "timeout": 5
+          }
+        ]
+      }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "/Users/yuanlun.xu/.claude/hud/hud-wrapper.sh"
   },
   "enabledPlugins": {
     "claude-mem@thedotmack": true,
     "frontend-design@claude-plugins-official": true,
-    "n8n-mcp-skills@n8n-mcp-skills": true,
-    "oh-my-claude-sisyphus@oh-my-claude-sisyphus": true,
+    "n8n-mcp-skills@n8n-mcp-skills": false,
+    "oh-my-claude-sisyphus@oh-my-claude-sisyphus": false,
     "perplexity@perplexity-mcp-server": false,
     "ralph-loop@claude-plugins-official": false,
     "ralph-wiggum@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
-    "content-dev@content-dev-skills": true,
-    "agent-sdk-dev@claude-plugins-official": true
+    "content-dev@content-dev-skills": false,
+    "agent-sdk-dev@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "oh-my-claudecode@omc": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": true,
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  }
+  "skipDangerousModePermissionPrompt": true
 }

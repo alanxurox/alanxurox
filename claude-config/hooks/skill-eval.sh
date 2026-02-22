@@ -3,9 +3,9 @@
 # Increases skill activation from ~20% to ~84%
 # Source: https://scottspence.com/posts/how-to-make-claude-code-skills-activate-reliably
 
-# Only run on substantive prompts (skip single-word commands)
-PROMPT_LENGTH=${#CLAUDE_USER_PROMPT}
-if [ "$PROMPT_LENGTH" -lt 20 ]; then
+# Gate on stdin length (Claude Code pipes user prompt to stdin)
+PROMPT=$(cat 2>/dev/null)
+if [ ${#PROMPT} -lt 30 ]; then
   exit 0
 fi
 

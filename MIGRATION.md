@@ -266,41 +266,71 @@ OpenCode supports the same hook events as Claude Code. All hooks are portable wi
 
 **consolidate-learnings.sh**, **hourly-memory-sync.sh**, **mac-to-vpc-sync.sh** → External cron jobs. No changes needed — these run independently.
 
-### 4.3 OpenCode Hook Registration
+### 4.3 OpenCode Hook Registration via Plugins
 
-**Target:** `~/.config/opencode/opencode.json`
+**CRITICAL UPDATE:** OpenCode does NOT use a `hooks` config block like Claude Code. Instead, hooks are implemented as **JavaScript/TypeScript plugins** in `~/.config/opencode/plugins/` or `.opencode/plugins/`.
 
-```jsonc
-{
-  "plugin": ["oh-my-opencode"],
-  "hooks": {
-    "sessionStart": [
-      { "command": "$HOME/.config/opencode/hooks/session-start.sh", "timeout": 10 }
-    ],
-    "sessionEnd": [
-      { "command": "$HOME/.config/opencode/hooks/session-end.sh", "timeout": 30 }
-    ],
-    "preCompact": [
-      { "command": "$HOME/.config/opencode/hooks/pre-compact-extract.sh", "timeout": 30 }
-    ],
-    "userPromptSubmit": [
-      { "command": "$HOME/.config/opencode/hooks/time-inject.sh", "timeout": 2 }
-    ],
-    "stop": [
-      { "command": "$HOME/.config/opencode/hooks/sync-to-vpc.sh", "timeout": 30 }
-    ],
-    "preToolUse": [
-      {
-        "matcher": "mcp__sdlc-jira__(create_issue|update_issue|add_comment)",
-        "command": "$HOME/.config/opencode/hooks/jira-gate.sh",
-        "timeout": 5
+**Target:** `~/.config/opencode/plugins/claude-hooks.ts`
+
+```typescript
+import type { Plugin } from "@opencode-ai/plugin"
+import { exec } from "child_process"
+import { promisify } from "util"
+
+const execAsync = promisify(exec)
+
+export const ClaudeHooksPlugin: Plugin = async ({ directory, worktree }) => {
+  // Session start hook
+  const sessionStartResult = await execAsync(
+    `$HOME/.config/opencode/hooks/session-start.sh`,
+    { timeout: 10000, env: { ...process.env, CWD: directory, WORKTREE: worktree } }
+  ).catch(e => ({ stdout: "", stderr: e.message }))
+  
+  return {
+    // Session events
+    "session.created": async ({ session }) => {
+      // Re-run session start on new sessions if needed
+    },
+    
+    "session.idle": async ({ session }) => {
+      // Session end hook
+      await execAsync(`$HOME/.config/opencode/hooks/session-end.sh`, { timeout: 30000 })
+    },
+    
+    "session.compacted": async ({ session }) => {
+      // Pre-compact hook
+      await execAsync(`$HOME/.config/opencode/hooks/pre-compact-extract.sh`, { timeout: 30000 })
+    },
+    
+    // Tool events (replaces PreToolUse)
+    "tool.execute.before": async (input, output) => {
+      // JIRA gate
+      if (input.tool.match(/mcp__sdlc-jira__(create_issue|update_issue|add_comment)/)) {
+        const result = await execAsync(`$HOME/.config/opencode/hooks/jira-gate.sh`, { timeout: 5000 })
+        if (result.stderr) throw new Error(result.stderr)
       }
-    ]
+    },
   }
 }
 ```
 
-> **Note:** OpenCode hook config format may differ slightly from Claude Code. Verify against OpenCode docs at time of implementation — the field names above are illustrative.
+**Event Mapping (Claude Code → OpenCode Plugin):**
+
+| Claude Code Event | OpenCode Plugin Event | Notes |
+|-------------------|----------------------|-------|
+| `SessionStart` | Plugin init + `session.created` | Plugin runs at load; use `session.created` for per-session logic |
+| `SessionEnd` | `session.idle` | Fires when session becomes idle |
+| `PreCompact` | `session.compacted` | Fires after compaction (use `experimental.session.compacting` for before) |
+| `UserPromptSubmit` | `tui.command.execute` | TUI-specific; no direct CLI equivalent |
+| `Stop` | `session.idle` | Use idle as proxy for stop |
+| `PreToolUse` | `tool.execute.before` | Receives `input` with tool name, can throw to block |
+| `PostToolUse` | `tool.execute.after` | Receives input and output |
+
+**Key Differences:**
+1. Hooks are JS/TS, not bash — but can shell out to existing scripts
+2. No `matcher` regex in config — implement matching in JS
+3. Timeout handled via `execAsync` options, not config
+4. Plugin context provides `directory`, `worktree`, `client`, `$` (Bun shell)
 
 ---
 

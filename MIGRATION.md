@@ -1,6 +1,6 @@
 # Migration Plan: Claude Code + OMC → OpenCode + Oh My OpenCode
 
-**Date:** 2026-02-27
+**Date:** 2026-02-28
 **Branch:** `claude/migrate-to-opencode-iQcw5`
 **Author:** Alan Xu
 
@@ -684,11 +684,144 @@ Week 4 — Polish & Validation
 
 ---
 
+---
+
+## Appendix A: OpenCode TUI vs OMC HUD
+
+### What You Had: `cc` + OMC HUD
+
+The `cc` launcher was a lightweight wrapper for Claude Code. The OMC HUD ran as a `statusLine` command (`hud-wrapper.sh`) — a single-line bar at the bottom showing session mode, agent state, and task counts.
+
+**Claude Code layout (flat):**
+```
+┌─────────────────────────────────────────────────────┐
+│  Chat message stream (full width)                   │
+│                                                     │
+│  > prompt input                                     │
+├─────────────────────────────────────────────────────┤
+│  [OMC HUD: ultrawork | agents: 3 | tasks: 2 done]  │
+└─────────────────────────────────────────────────────┘
+```
+
+### What You Get: OpenCode TUI
+
+OpenCode's TUI is a full SolidJS + Zig-native 60fps terminal application. The OMC HUD is redundant because the sidebar surfaces more data natively.
+
+**OpenCode layout (terminal > 120 cols):**
+```
+┌──────────────────────────────┬──────────────────────┐
+│  Message stream (scrollable) │  SESSION SIDEBAR      │
+│                              │  Session title        │
+│  [tool use details]          │  Context: 42k / 200k  │
+│  [assistant response]        │  Cost: $0.12          │
+│  [thinking blocks]           │  ─────────────────── │
+│                              │  MCP: jira ✓  tc ✓   │
+│                              │  LSP: typescript ✓    │
+│                              │  ─────────────────── │
+│                              │  TODO: 3 items        │
+│                              │  Files changed: 7     │
+│                              │  +142 / -38           │
+├──────────────────────────────┴──────────────────────┤
+│  > @ file fuzzy  |  ! bash  |  / command            │
+└─────────────────────────────────────────────────────┘
+```
+
+**Sidebar shows natively — no hook needed:**
+- Token context usage + cost
+- MCP server connection status (color-coded)
+- Active LSP servers
+- TODO items extracted from conversation
+- Modified files + diff line counts
+
+**Key navigation:**
+| Action | Key |
+|--------|-----|
+| Command palette | `Ctrl+K` |
+| Switch session | `Ctrl+S` |
+| File picker | `Ctrl+F` |
+| New session | `/new` |
+| List sessions | `/sessions` |
+| Export to markdown | `/export` |
+| Undo last + file changes | `/undo` |
+| Compact (summarize) | `/compact` |
+| Toggle tool details | `/details` |
+| Toggle thinking | `/thinking` |
+
+**Migration impact:**
+- `hud-wrapper.sh` → retire. Sidebar replaces it.
+- `cc` launcher → `oc` wrapper (Phase 11) or use `/sessions` picker built-in.
+- Narrow terminal (< 120 cols): sidebar hides, single-panel Claude Code-style layout resumes.
+- OMO overlays its Sisyphus orchestration state on top of the native sidebar.
+
+---
+
+## Appendix B: Session Handoff — Claude Code → OpenCode
+
+### Option 1: `cli-continues` (Best for one-off handoffs)
+
+[`cli-continues`](https://github.com/yigitkonur/cli-continues) handles cross-tool session handoff and supports both Claude Code and OpenCode natively.
+
+```bash
+npx continues                                   # interactive session picker
+continues resume <claude-session-id> --in opencode  # direct handoff
+```
+
+**Handoff document contains:**
+- Conversation history (minimal/standard/verbose/full presets)
+- Tool activity: bash commands, file reads/writes, MCP tool calls
+- Session metadata: model, token usage, key decisions
+- File change summary and architecture context
+
+### Option 2: Your existing hook pipeline (Best for daily use)
+
+Your `session-end.sh` already writes to `vpc-worker:~/memory/YYYY-MM-DD.md` and `claude-mem.db`. Your `session-start.sh` for OpenCode reads those same sources. Context from a Claude Code session surfaces automatically in the next OpenCode session via the hook. **No new tooling needed.**
+
+This is the cleanest path given your existing memory infrastructure.
+
+### Option 3: Claude.ai web → OpenCode
+
+If you start something in Claude.ai browser chat and want to continue in OpenCode:
+1. Key decisions/context → `~/Desktop/ALAN-CONTEXT.md` → `Open Questions` section
+2. `session-start.sh` hook already injects that section into every OpenCode session start
+
+---
+
+## Appendix C: dataclaw — Session Archive
+
+[`dataclaw`](https://github.com/peteromallet/dataclaw) exports AI coding agent conversation histories (Claude Code, OpenCode, Codex, Gemini) into structured datasets for Hugging Face. Privacy-first: path anonymization, username hashing, API key redaction.
+
+```bash
+pip install dataclaw
+dataclaw update-skill claude    # install Claude Code skill
+dataclaw prep                   # analyze available sessions
+dataclaw export --no-push       # review locally first
+```
+
+**Relevant for your setup:**
+- Export your 26-skill validated workflows as reusable training datasets
+- Archive the 28% → 100% CSS validation sessions as structured data
+- OpenCode sessions export natively (not just Claude Code)
+
+Not on the migration critical path — optional value-add.
+
+---
+
+## Appendix D: amplifying.ai
+
+Not a migration resource. It's an AI benchmarking research site analyzing Claude Code's package recommendations across 2,430 real repositories. No OpenCode or OMC migration guidance published there.
+
+---
+
 ## References
 
 - [Oh My OpenCode GitHub](https://github.com/code-yeongyu/oh-my-opencode)
 - [Oh My OpenCode website](https://ohmyopencode.com/)
 - [OpenCode GitHub](https://github.com/opencode-ai/opencode)
 - [OpenCode official site](https://opencode.ai/)
+- [OpenCode TUI docs](https://opencode.ai/docs/tui/)
+- [OpenCode TUI architecture](https://deepwiki.com/opencode-ai/opencode/4-terminal-ui-system)
 - [Oh My ClaudeCode (OMC) — source](https://github.com/Yeachan-Heo/oh-my-claudecode)
 - [OMO Installation Guide](https://github.com/code-yeongyu/oh-my-opencode/blob/dev/docs/guide/installation.md)
+- [cli-continues — cross-tool session handoff](https://github.com/yigitkonur/cli-continues)
+- [dataclaw — session history export](https://github.com/peteromallet/dataclaw)
+- [amplifying.ai — AI benchmark research](https://amplifying.ai)

@@ -41,7 +41,7 @@ Frontend/product engineer who moved deep into AI workflow automation. I build pr
 - **[better-litellm](https://github.com/alanxurox/better-litellm)** — HTTP proxy + CLI for Claude Code with LiteLLM. Security hardened, zero external deps
 - **[oh-my-claudecode](https://github.com/jujumilk3/oh-my-claudecode)** — Multi-agent orchestration framework (7K+ stars). Contributor
 - **[Voca](https://voca.zhengyishen.com)** — macOS speech-to-text (Swift/KMP). Shipped entitlement + audio fixes
-- **ZenX ecosystem** — Contributing to ZenX (app OS), Frost (browser), Mark (markdown editor) with Zhengyi Shen
+- **[Zenix](https://github.com/zenixos/zenix)** — Autonomous agent platform for high-stake decision-makers. Nushell-native, Jujutsu VCS, plugin architecture. Collaborator
 
 ## Background
 

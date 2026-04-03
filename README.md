@@ -1,6 +1,6 @@
 # Alan Xu (Yuanlun Xu)
 
-**AI engineer shipping production LLM agents at enterprise scale.** Reached out to by Anthropic as one of GenDigital's top Claude Code users. Native Mandarin speaker, born Beijing, US-educated (Babson + Olin).
+**AI engineer shipping production LLM agents at enterprise scale.** Reached out to by Anthropic as one of GenDigital's top Claude Code users. Native Mandarin speaker, born Beijing, US-educated (Babson + Olin), EU-resident.
 
 ## What I Ship
 

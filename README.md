@@ -1,56 +1,43 @@
-# Alan Xu — Senior Engineer | AI Workflow Systems
+# Alan Xu (Yuanlun Xu)
 
-Frontend/product engineer who moved deep into AI workflow automation. I build production systems that survive real enterprise constraints: browser behavior, internationalization, approval gates, and the gap between what an LLM generates and what actually works.
+**AI engineer shipping production LLM agents at enterprise scale.** Reached out to by Anthropic as one of GenDigital's top Claude Code users. Native Mandarin speaker, born Beijing, US-educated (Babson + Olin).
 
-## What I Build
+## What I Ship
 
-- **Production email agent** (NEMO) — Figma-to-SFMC delivery pipeline with targeting, QA gates, sendout preflight, and Langfuse observability. Sole owner, 6 PRs shipped since Feb 2026
-- **SFMC Catalog MCP server** — SQLite + Chroma-backed semantic search over email templates and snippets, deployed via TeamCity/Kubernetes
-- **Deterministic validation systems** — CSS class validation via grep + whitelist (28% to 100% accuracy across 200+ screens), not prompt tuning
-- **Campaign UIs at scale** — 100+ production campaign screens across Norton, Avast, AVG with full i18n/l10n in 30+ languages
-- **Internal developer tooling** — better-litellm proxy (40 commits, 6 releases, security hardened), adopted org-wide
-
-## Current Work
-
-- Extending NEMO into full Rapid Response / DTC delivery workflow: proof chains, QA gates, targeting preview, Composer-triggered handoffs
-- Building MCP servers for enterprise systems (SFMC catalog, Jira, BigQuery)
-- Production observability: Langfuse tracing, eval sampling, build-stamped traces, health endpoints
-- Shipped 74 revenue-facing campaigns including Product Recommender (8%+ bookings uplift, ~$3.4M program)
-
-## Tech Stack
-
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue) ![Python](https://img.shields.io/badge/Python-3.11-green) ![React](https://img.shields.io/badge/React-Production-blue) ![Claude](https://img.shields.io/badge/Claude-API-blue) ![MCP](https://img.shields.io/badge/MCP-Protocol-purple) ![GCP](https://img.shields.io/badge/GCP-Terraform-orange)
-
-**Frontend:** TypeScript, React, HTML/CSS, Playwright, Figma API, i18n/l10n
-**AI/ML:** Python, Claude API, Model Context Protocol, LangGraph/Pydantic AI, Langfuse
-**Infrastructure:** GCP, Docker, Kubernetes, TeamCity, SQLite, ChromaDB
-
-## By The Numbers
-
-- **100+** campaign screens shipped to 500M+ users
-- **74** revenue-facing campaigns delivered (Jira-verified)
-- **$3.4M** program contribution (Product Recommender, 8%+ bookings uplift)
-- **875** design system classes catalogued for AI consumption
-- **178** TDD tests in content validation system
-- **28% to 100%** CSS accuracy via deterministic gates
-- **25** stars on mission-control (agent fleet coordination)
+- **Production LLM agent** (NEMO) — LangGraph, 12 tools, human-in-the-loop approval gates, Redis state, Langfuse observability. Serving 3 brands (Norton, Avast, AVG) across 30+ languages to 500M+ users
+- **5+ MCP servers** (Python/FastMCP) — bridging LLMs to SFMC, Jira, BigQuery, Postgres, enterprise search across 40+ data sources
+- **Deterministic eval methodology** (Langfuse) — biased toward interesting cases, not random. Build-stamped traces correlate quality regressions with specific releases
+- **better-litellm** — LLM proxy adopted org-wide. CTO engineering leadership proposed deploying server-side as zero-config infrastructure. Found and fixed command injection vulnerability before shipping
+- **ML experiment operations** — Configured Product Recommender A/B program (7.5%+ stat-sig bookings uplift). Operationalized Segmented Discounting pricing optimization through CDP/IPM
 
 ## Open Source
 
-- **[mission-control](https://github.com/alanxurox/mission-control)** — Coordination layer for agent fleets. Bash + SQLite, zero dependencies. 25 stars
-- **[better-litellm](https://github.com/alanxurox/better-litellm)** — HTTP proxy + CLI for Claude Code with LiteLLM. Security hardened, zero external deps
-- **[oh-my-claudecode](https://github.com/jujumilk3/oh-my-claudecode)** — Multi-agent orchestration framework (7K+ stars). Contributor
-- **[Voca](https://voca.zhengyishen.com)** — macOS speech-to-text (Swift/KMP). Shipped entitlement + audio fixes
-- **[Zenix](https://github.com/zenixos/zenix)** — Autonomous agent platform for high-stake decision-makers. Nushell-native, Jujutsu VCS, plugin architecture. Collaborator
+| Project | Role | Description |
+|---------|------|-------------|
+| **[mission-control](https://github.com/alanxurox/mission-control)** | Author | Multi-agent coordination. Bash + SQLite, zero deps. 31 stars, 5 forks |
+| **[oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode)** | Contributor | AI coding agent framework. 7K+ stars upstream |
+| **[Voca](https://voca.zhengyishen.com)** | Collaborator | macOS speech-to-text (Swift/KMP). Whisper, Parakeet, SenseVoice. 8 PRs, 6 merged |
+| **[Zenix](https://github.com/zenixos/zenix)** | Collaborator | Autonomous agent platform. 148 commits. Nushell-native, Jujutsu VCS |
+| **[better-glean](https://github.com/alanxurox/better-glean)** | Author | Agent Skill for precise Glean MCP searches across 40+ enterprise data sources |
+| **[mcp-weixin-spider](https://github.com/alanxurox/mcp-weixin-spider)** | Author | MCP server for WeChat article crawling |
+
+## Side Projects
+
+- **GPT-SoVITS Voice Cloning** — E2E ML training pipeline. PyTorch, LoRA, GPU inference. Iterated when training loss converged but perceptual quality degraded
+- **Autonomous Agent Infrastructure** — 24/7 fleet on personal VPC. Experimenting with OpenClaw-RL, Hermes Agent (GRPO + LoRA), Karpathy's Autoresearch
+
+## Tech Stack
+
+**LLM/AI:** LangGraph, MCP (author), Langfuse, LiteLLM, Claude/Gemini APIs, RAG
+**ML/Data:** PyTorch, LoRA/Peft, BigQuery, SQL, A/B testing, uplift measurement, CDP
+**Languages:** Python, TypeScript/JavaScript, SQL, Bash
+**Cloud:** GCP (project owner), Vertex AI, AWS Bedrock, Docker, Kubernetes
+**Backend:** FastAPI, WebSocket, Redis, Node.js, PostgreSQL, SQLite, ChromaDB
 
 ## Background
 
-**Babson College** — Technology Entrepreneurship + Business Analytics (STEM)
-**GenDigital** — Sr Software Engineer (AI Focus), Marketing Ops AI Team
-**Prague, CZ** | Open to remote EU
+**Babson College** (Massachusetts) — BS, Technology Entrepreneurship + Business Analytics (STEM). Cross-registered at **Olin College of Engineering**.
 
-I care about reliability over demos, honest assessment of what AI can and can't do, and building systems other people can actually operate.
+Sr Software Engineer (AI Focus) @ **GenDigital** (Norton, Avast, AVG — 500M+ users). Prague, Czech Republic.
 
-## Connect
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/alanxurox)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-alanxurox-blue)](https://linkedin.com/in/alanxurox) [![Email](https://img.shields.io/badge/Email-yxu6%40alum.babson.edu-green)](mailto:yxu6@alum.babson.edu)

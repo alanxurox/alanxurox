@@ -14,8 +14,8 @@
 
 | Project | Role | Description |
 |---------|------|-------------|
-| **[mission-control](https://github.com/alanxurox/mission-control)** | Author | Multi-agent coordination. Bash + SQLite, zero deps. 31 stars, 5 forks |
-| **[oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode)** | Contributor | AI coding agent framework. 7K+ stars upstream |
+| **[mission-control](https://github.com/alanxurox/mission-control)** | Author | Multi-agent coordination. Bash + SQLite, zero deps. 32 stars, 5 forks |
+| **[oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode)** | Contributor | AI coding agent framework. 23K+ stars upstream |
 | **[Voca](https://voca.zhengyishen.com)** | Collaborator | macOS speech-to-text (Swift/KMP). Whisper, Parakeet, SenseVoice. 8 PRs, 6 merged |
 | **[Zenix](https://github.com/zenixos)** | Collaborator | Autonomous agent platform. 148 commits. Nushell-native, Jujutsu VCS |
 | **[better-glean](https://github.com/alanxurox/better-glean)** | Author | Agent Skill for precise Glean MCP searches across 40+ enterprise data sources |

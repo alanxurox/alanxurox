@@ -1,0 +1,18 @@
+# Local-only migration scratch
+/CUTOVER-CHECKLIST.md
+/MIGRATION-GAPS.md
+/MIGRATION-VALIDATION-*.md
+/archive/
+
+# Private/local agent config
+/claude-config/settings.local.json
+/claude-config/docs/CC_TO_OC_HANDOFF_PROMPT.md
+/claude-config/scripts/cc-to-oc-handoff.sh
+
+# Large app/project work should live in its own private repo
+/still-here-app/
+
+# Generated files
+.DS_Store
+__pycache__/
+*.pyc

@@ -1,43 +1,55 @@
-# Alan Xu (Yuanlun Xu)
+# Alan Xu — AI Systems Engineer
 
-**AI engineer shipping production LLM agents at enterprise scale.** Reached out to by Anthropic as one of GenDigital's top Claude Code users. Native Mandarin speaker, born Beijing, US-educated (Babson + Olin).
+I build AI systems that survive contact with production: explicit tools, approval gates, observability, deterministic evaluation, durable state, and verified delivery.
 
-## What I Ship
+Based in Prague. Native Mandarin, professional English. Former GenDigital Senior Software Engineer (AI Focus); Babson + Olin background in technology entrepreneurship, analytics, and engineering.
 
-- **Production LLM agent** (NEMO) — LangGraph, 12 tools, human-in-the-loop approval gates, Redis state, Langfuse observability. Serving 3 brands (Norton, Avast, AVG) across 30+ languages to 500M+ users
-- **5+ MCP servers** (Python/FastMCP) — bridging LLMs to SFMC, Jira, BigQuery, Postgres, enterprise search across 40+ data sources
-- **Deterministic eval methodology** (Langfuse) — biased toward interesting cases, not random. Build-stamped traces correlate quality regressions with specific releases
-- **better-litellm** — LLM proxy adopted org-wide. CTO engineering leadership proposed deploying server-side as zero-config infrastructure. Found and fixed command injection vulnerability before shipping
-- **ML experiment operations** — Configured Product Recommender A/B program (7.5%+ stat-sig bookings uplift). Operationalized Segmented Discounting pricing optimization through CDP/IPM
+## What I Work On
 
-## Open Source
+- **Production agent systems** — led engineering for an enterprise email-delivery agent at GenDigital; authored 13/13 PRs from prototype to production across guided workflows, persistent chat state, retrieval, preflight, and Langfuse observability
+- **Agent reliability and evals** — queue/drain behavior, memory, permissions, scheduling, send acknowledgement, rubric leakage, and human-grounded evaluation
+- **MCP and enterprise integration** — template retrieval, Jira, BigQuery/Postgres, enterprise search, and WeChat content tooling
+- **Product systems** — production campaign platforms, audience targeting, experimentation, and translating customer incidents into bounded requirements
 
-| Project | Role | Description |
-|---------|------|-------------|
-| **[mission-control](https://github.com/alanxurox/mission-control)** | Author | Multi-agent coordination. Bash + SQLite, zero deps. 31 stars, 5 forks |
-| **[oh-my-claudecode](https://github.com/yeachan-heo/oh-my-claudecode)** | Contributor | AI coding agent framework. 7K+ stars upstream |
-| **[Voca](https://voca.zhengyishen.com)** | Collaborator | macOS speech-to-text (Swift/KMP). Whisper, Parakeet, SenseVoice. 8 PRs, 6 merged |
-| **[Zenix](https://github.com/zenixos/zenix)** | Collaborator | Autonomous agent platform. 148 commits. Nushell-native, Jujutsu VCS |
-| **[better-glean](https://github.com/alanxurox/better-glean)** | Author | Agent Skill for precise Glean MCP searches across 40+ enterprise data sources |
-| **[mcp-weixin-spider](https://github.com/alanxurox/mcp-weixin-spider)** | Author | MCP server for WeChat article crawling |
+## Selected Public Work
 
-## Side Projects
+| Project | What it demonstrates |
+|---|---|
+| **[mission-control](https://github.com/alanxurox/mission-control)** | Zero-dependency coordination for agent fleets using Bash + SQLite. Task queues, health checks, and fleet state. 36 stars / 6 forks |
+| **[mcp-weixin-spider](https://github.com/alanxurox/mcp-weixin-spider)** | MCP server for crawling WeChat public-account articles with browser backends and anti-bot handling |
+| **[oh-my-claudecode PR #839](https://github.com/Yeachan-Heo/oh-my-claudecode/pull/839)** | Merged standalone-hook reliability guard in a 37K+ star multi-agent coding framework |
+| **[better-glean](https://github.com/alanxurox/better-glean)** | Precise enterprise-search patterns across 40+ data sources |
 
-- **GPT-SoVITS Voice Cloning** — E2E ML training pipeline. PyTorch, LoRA, GPU inference. Iterated when training loss converged but perceptual quality degraded
-- **Autonomous Agent Infrastructure** — 24/7 fleet on personal VPC. Experimenting with OpenClaw-RL, Hermes Agent (GRPO + LoRA), Karpathy's Autoresearch
+## Selected Systems Work
 
-## Tech Stack
+Some work is private or enterprise-internal; these descriptions intentionally omit internal URLs, customer data, and infrastructure identifiers.
 
-**LLM/AI:** LangGraph, MCP (author), Langfuse, LiteLLM, Claude/Gemini APIs, RAG
-**ML/Data:** PyTorch, LoRA/Peft, BigQuery, SQL, A/B testing, uplift measurement, CDP
-**Languages:** Python, TypeScript/JavaScript, SQL, Bash
-**Cloud:** GCP (project owner), Vertex AI, AWS Bedrock, Docker, Kubernetes
-**Backend:** FastAPI, WebSocket, Redis, Node.js, PostgreSQL, SQLite, ChromaDB
+- **Production email agent** — guided end-to-end delivery workflow, human approval, persistent chat state, catalog retrieval, targeting/QA preflight, and observability
+- **WeCom conversation archive** — sole-authored async ingest, RSA decryption/key rotation, scoped query API, Postgres schema, and media preservation; 30 commits
+- **AI-assistant reliability program** — reproduced failures across queueing, durable memory, timers, permissions, rendering, and egress; converted evidence into issues and SOPs
+- **better-litellm** — internal zero-dependency Node.js proxy; six releases, setup reduced from roughly 30 minutes to 2 minutes, command-injection paths fixed
+
+## Operating Principles
+
+1. **Generated is not delivered.** Completion requires transport, acknowledgement, and user-visible proof.
+2. **Prompts cannot repair missing state.** Persistence, identity, scheduling, and routing need explicit system contracts.
+3. **A valid eval needs the right oracle.** Capability smoke tests are not evidence of persona or workflow alignment.
+4. **Claims need evidence.** I distinguish shipped work, measured outcomes, hypotheses, and work in progress.
+
+## Core Stack
+
+**AI systems:** LangGraph, Model Context Protocol, Langfuse, LiteLLM, human-in-the-loop workflows, deterministic evaluation  
+**Languages:** Python, TypeScript/JavaScript, SQL, Bash  
+**Application:** FastAPI, Node.js, React, Playwright/Puppeteer  
+**Data:** PostgreSQL, SQLite, Chroma, BigQuery  
+**Infrastructure:** GCP, AWS Bedrock, Vertex AI, Docker, Kubernetes, TeamCity
 
 ## Background
 
-**Babson College** (Massachusetts) — BS, Technology Entrepreneurship + Business Analytics (STEM). Cross-registered at **Olin College of Engineering**.
+- **GenDigital** — Frontend Developer → Software Engineer → Senior Software Engineer (AI Focus), October 2023–May 2026. Norton, Avast, and AVG; the brands reach 500M+ users
+- **Babson College** — BS, Technology Entrepreneurship + Business Analytics (STEM)
+- **Olin College of Engineering** — cross-registered in Design & Computing
 
-Sr Software Engineer (AI Focus) @ **GenDigital** (Norton, Avast, AVG — 500M+ users). Prague, Czech Republic.
+## Connect
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-alanxurox-blue)](https://linkedin.com/in/alanxurox) [![Email](https://img.shields.io/badge/Email-yxu6%40alum.babson.edu-green)](mailto:yxu6@alum.babson.edu)
+[LinkedIn](https://linkedin.com/in/alanxurox) · [Email](mailto:yxu6@alum.babson.edu)
